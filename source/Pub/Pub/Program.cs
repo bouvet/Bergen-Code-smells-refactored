@@ -1,21 +1,28 @@
 ﻿using System;
+using Microsoft.Extensions.DependencyInjection;
+using Pub.Repositories;
+using Pub.Repositories.Contracts;
+using Pub.Services;
+using Pub.Services.Contracts;
 
 namespace Pub
 {
     internal class Program
     {
-        public const string OneBeer = "hansa";
-        public const string OneCider = "grans";
-        public const string AProperCider = "strongbow";
-        public const string Gt = "gt";
-        public const string BacardiSpecial = "bacardi_special";
-
         private static void Main()
         {
-            var pubPrice = new PubPrice();
+            var serviceProvider = new ServiceCollection()
+                .AddSingleton<IBeverageRepository, BeverageHardCodedRepository>()
+                .AddSingleton<IBeverageService, BeverageService>()
+                .AddSingleton<IPubPrice, PubPrice>()
+                .BuildServiceProvider();
+
+            var beverageService = serviceProvider.GetService<IBeverageService>();
+            var pubPrice = serviceProvider.GetService<IPubPrice>();
+
             string command = null;
 
-            PrintMenu();
+            PrintMenu(beverageService);
 
             while (string.IsNullOrEmpty(command) || command.Trim().ToLower() != "exit")
             {
@@ -37,7 +44,7 @@ namespace Pub
             }
         }
 
-        private static void PrintMenu()
+        private static void PrintMenu(IBeverageService beverageService)
         {
             Console.WriteLine("--------------------------------------------------------------------------------------------------------------------");
             Console.WriteLine("Please place your order with following command: [drink] [isStudent] [amount] (Example: hansa true 2)");
@@ -46,11 +53,11 @@ namespace Pub
             Console.WriteLine("");
             Console.WriteLine("Menu");
             Console.WriteLine("********************************************************");
-            Console.WriteLine(OneBeer);
-            Console.WriteLine(OneCider);
-            Console.WriteLine(AProperCider);
-            Console.WriteLine(Gt);
-            Console.WriteLine(BacardiSpecial);
+            var drinks = beverageService.GetAllBeverages();
+            foreach (var beverage in drinks)
+            {
+                Console.WriteLine(beverage.Name);
+            }
             Console.WriteLine("********************************************************");
         }
     }
