@@ -1,44 +1,26 @@
-﻿namespace Pub
+﻿using Pub.Services.Contracts;
+
+namespace Pub
 {
-    public class PubPrice
+    public class PubPrice : IPubPrice
     {
-        public const string OneBeer = "hansa";
-        public const string OneCider = "grans";
-        public const string AProperCider = "strongbow";
-        public const string Gt = "gt";
-        public const string BacardiSpecial = "bacardi_special";
+        private readonly IBeverageService _beverageService;
+
+        public PubPrice(IBeverageService beverageService)
+        {
+            _beverageService = beverageService;
+        }
 
         public int ComputeCost(string drink, bool student, int amount)
         {
-            if (amount > 2 && (drink == "gt" || drink == "bacardi_special"))
-            {
+            var currentBeverage = _beverageService.GetByName(drink);
+            if(currentBeverage == null)
+                throw new PubOrderException($"Drink with name {drink} does not exist.");
+
+            if (currentBeverage.MaxOrderNumber != -1 && amount > currentBeverage.MaxOrderNumber)
                 throw new PubOrderException("Maximum number of drinks to order is 2.");
-            }
 
-            int price;
-
-            if (drink.ToLower().Equals(OneBeer))
-                price = 74;
-
-            else if (drink.ToLower().Equals(OneCider))
-                price = 103;
-
-            else if (drink.ToLower().Equals(AProperCider))
-                price = 110;
-
-            else if (drink.ToLower().Equals(Gt))
-                price = Ingredient6() + Ingredient5() + Ingredient4();
-
-            else if (drink.ToLower().Equals(BacardiSpecial))
-                price = Ingredient6() / 2 + Ingredient1() + Ingredient2() + Ingredient3();
-
-            else
-                throw new PubOrderException($"You can't order {drink}.");
-
-            if (student && (drink == OneCider || drink == OneBeer || drink == AProperCider))
-                price -= price / 10;
-
-            return price * amount;
+            return currentBeverage.Price(student) * amount;
         }
 
         public (string drink, bool student, int amount) ParseOrder(string order)
@@ -48,7 +30,7 @@
 
             var orderList = order.Split(' ');
             if (orderList == null || orderList.Length != 3)
-                throw new PubOrderException("The format of your order  have to be correct. The order should have the format: [drink] [student] [amount].");
+                throw new PubOrderException("The format of your order have to be correct. The order should have the format: [drink] [student] [amount].");
 
             var drink = orderList[0]?.Trim();
             if (!bool.TryParse(orderList[1], out var student))
@@ -63,39 +45,5 @@
             return (drink, student, amount);
         }
 
-        private static int Ingredient1()
-        {
-            return 65;
-        }
-
-        //one unit of grenadine
-        private static int Ingredient2()
-        {
-            return 10;
-        }
-
-        //one unit of lime juice
-        private static int Ingredient3()
-        {
-            return 10;
-        }
-
-        //one unit of green stuff
-        private static int Ingredient4()
-        {
-            return 10;
-        }
-
-        //one unit of tonic water
-        private static int Ingredient5()
-        {
-            return 20;
-        }
-
-        //one unit of gin
-        private static int Ingredient6()
-        {
-            return 85;
-        }
     }
 }

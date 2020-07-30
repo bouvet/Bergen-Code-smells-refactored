@@ -1,16 +1,26 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Pub;
+using Pub.Repositories;
+using Pub.Repositories.Contracts;
+using Pub.Services;
+using Pub.Services.Contracts;
 
 namespace Tests
 {
     [TestClass]
     public class PubTests
     {
-        public PubPrice PubPrice;
+        public IPubPrice PubPrice;
 
         public PubTests()
         {
-            PubPrice = new PubPrice();
+            var serviceProvider = new ServiceCollection()
+                .AddSingleton<IBeverageRepository, BeverageHardCodedRepository>()
+                .AddSingleton<IBeverageService, BeverageService>()
+                .AddSingleton<IPubPrice, PubPrice>()
+                .BuildServiceProvider();
+            PubPrice = serviceProvider.GetService<IPubPrice>();
         }
 
         [TestMethod]
